@@ -1,0 +1,28 @@
+{
+  "name": "jquery-places-autocomplete",
+  "title": "jQuery Places autocomplete widget",
+  "description": "Jquery Places Atocoplete widget compatible witch chosen plugin",
+  "version": "0.0.0",
+  "homepage": "@add_me",
+  "author": {
+    "name": "Marek Fajkus",
+    "url": "https://github.com/turboMaCk"
+  },
+  "repository": {
+    "type": "git",
+    "url": "@add_me"
+  },
+  "bugs": "",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/MIT"
+    }
+  ],
+  "dependencies": {
+    "jquery": "~latest"
+  },
+  "keywords": [
+    "jquery-plugin"
+  ]
+}
