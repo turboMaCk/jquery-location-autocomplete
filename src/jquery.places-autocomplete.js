@@ -18,6 +18,12 @@
     // Create the defaults once
     var pluginName = 'placesAutocomplte',
         defaults = {
+
+            /*
+             * Default html classes are compatible with chosen plugin.
+             * You can easily style both places-autocomplete and chosen with same selector
+             */
+
             /**
              * containerClasses
              * @type [string]
@@ -116,9 +122,6 @@
             var element = $(this.element),
                 widget;
 
-            // define widget structure
-            // this is compatible with jquery chosen structure
-
             // Create container
             widget = this._createElement('div', this.options.containerClasses);
 
@@ -190,7 +193,7 @@
             // add map nex to widget
             this.cached.container.after(mapContainer);
 
-            // prepare array for markers
+            // prepare instance's global array for markers
             this.markers = [];
         },
         /**
@@ -248,13 +251,28 @@
                     map: self.map
                 });
 
-            // set new bounds
+            // extend instance global bounds with new marker
             this.mapBounds.extend(position);
 
             // fit bounds
-            this.map.fitBounds(this.mapBounds);
+            this._fitBounds();
 
+            // store marker to instance global
             this.markers.push(marker);
+        },
+        /**
+         * @private fitBounds
+         * @description map viewport to bounds
+         * @args bounds [google location object || empty]
+         * if bounds not set => use instance global mapBounds object
+         */
+        _fitBounds: function(bounds) {
+
+            // use global if bounds not set
+            if (!bounds) { bounds = this.mapBounds; }
+
+            // fit bounds
+            this.map.fitBounds(bounds);
         }
      };
 
