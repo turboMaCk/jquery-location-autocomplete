@@ -1,20 +1,41 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<link rel="stylesheet" src="../bower_components/chosen/public/chosen.css">
-<link rel="stylesheet" src="../src/jquery.places-autocomplete.css">
-<link rel="stylesheet" src="style.css">
+<link rel="stylesheet" href="../bower_components/chosen/public/chosen.css">
+<link rel="stylesheet" href="../src/jquery.places-autocomplete.css">
+<link rel="stylesheet" href="style.css">
 
 <title>jQuery Places Autocomplete Demo</title>
 
 </head>
 <body>
 <h1>Hi there</h1>
+
+<!--widget html structure-->
+<select multiple id="location-autocomplete">
+    <option value="" data-address="Brno" data-latitude="12" data-longitude="13">Brno</option>
+</select>
+<!--end widget-->
+
 <!--scripts here-->
-<script src="../bower_components/jquery/dist/jquery.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>
+<script src="../bower_components/jquery/jquery.js"></script>
 <script src="../bower_components/chosen/coffee/chosen.jquery.js"></script>
 <script src="../src/jquery.places-autocomplete.js"></script>
 <!--end scripts-->
+
+<!--initialize plugin-->
+<script>
+    (function($){
+        $(function(){
+            $('#location-autocomplete').placesAutocomplte();
+         });
+     })(jQuery)
+</script>
+
+<!--Add livereload support-->
+<script src="//localhost:35729/livereload.js"></script>
+<!--<3 live reload-->
 
 </body>
 </html>
