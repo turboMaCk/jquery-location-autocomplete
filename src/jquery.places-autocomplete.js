@@ -88,6 +88,7 @@
         /*
          * Create widget
          * @description deal with html
+         * this also handle element caching
          */
         _createWidget: function() {
             var self = this,
@@ -101,19 +102,19 @@
             widget = this._createElement('div', this.options.containerClasses);
 
             // Create selected items container
-            var selectedUl = this._createElement('ul', this.options.selectedListClasses);
+            var selectedList = this._createElement('ul', this.options.selectedListClasses);
 
             // Create search input
-            var searchInput = this._createElement('li', this.options.searchFieldClasses);
-            $(searchInput).append('<input type="text"/>');
-            $(selectedUl).append(searchInput);
+            var searchInputWrapper = this._createElement('li', this.options.searchFieldClasses),
+                searchInput = $(searchInputWrapper).append('<input type="text"/>');
+            $(selectedList).append(searchInputWrapper);
 
             // create drop container
-            var dropContainer = this._createElement('div', this.options.dropContainerClasses);
-            $(dropContainer).append(this._createElement('ul', this.options.dropListClasses));
+            var dropContainer = this._createElement('div', this.options.dropContainerClasses),
+                dropList = $(dropContainer).append(this._createElement('ul', this.options.dropListClasses));
 
             // add items list to widget
-            $(widget).append(selectedUl);
+            $(widget).append(selectedList);
 
             // add drop to widget
             $(widget).append(dropContainer);
@@ -123,6 +124,21 @@
 
             // Add widget
             element.after(widget);
+
+            // Add cache
+            this.cached = {};
+
+            // Add elements to cashed
+            this.cached.container = $(widget);
+            this.cached.selectedList = $(selectedList);
+            this.cached.searchField = $(searchInput);
+            this.cached.dropContainer = $(dropContainer);
+            this.cached.dropList = $(dropList);
+
+            // cache childrens selectors
+            this.cached.selectedItems = $(selectedList).children(':not(' + this.options.searchFieldClasses + ')');
+            this.cached.dropItems = $(dropList).children();
+            console.log(this.cached);
         },
         /*
          * @private createElement
@@ -139,21 +155,7 @@
             // return element
             return el;
         },
-        /*
-        Cash elements
-        */
-        casheElements: function() {
-            var $element = $(this.element),
-                $container = $element.children('.gridguide-container'),
-                $articles = $container.children();
-
-            this.cashed = {
-                'element': $element,
-                'container': $container,
-                'articles': $articles
-            };
-        },
-    };
+     };
 
     // A really lightweight plugin wrapper around the constructor,
     // preventing against multiple instantiations
