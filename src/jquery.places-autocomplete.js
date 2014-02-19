@@ -52,8 +52,27 @@
              * dropListClasses
              * @type [string]
              */
-            dropListClasses: 'chosen-result'
-
+            dropListClasses: 'chosen-result',
+            /*
+             * mapContainerClasses
+             * @type [string]
+             */
+            mapContainerClasses: 'chosen-map-canvas',
+            /*
+             * useOwnMap
+             * @type [boolean]
+             */
+            useOwnMap: true,
+            /*
+             * mapDefaults
+             * just basic google maps setup
+             * @type [object]
+             */
+            mapDefaults: {
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                center: new google.maps.LatLng(-34.397, 150.644),
+                zoom: 8
+            }
         };
 
     // The actual plugin constructor
@@ -82,17 +101,18 @@
             // Wrap to grid guide container
             this._createWidget();
 
-            // Cashe Elements
-            //this.casheElements();
-        },
+            // Create own Map if it's set
+            if(this.options.useOwnMap) {
+                this._createMap();
+            }
+         },
         /*
          * Create widget
          * @description deal with html
          * this also handle element caching
          */
         _createWidget: function() {
-            var self = this,
-                element = $(this.element),
+            var element = $(this.element),
                 widget;
 
             // define widget structure
@@ -138,7 +158,6 @@
             // cache childrens selectors
             this.cached.selectedItems = $(selectedList).children(':not(' + this.options.searchFieldClasses + ')');
             this.cached.dropItems = $(dropList).children();
-            console.log(this.cached);
         },
         /*
          * @private createElement
@@ -155,6 +174,22 @@
             // return element
             return el;
         },
+        /*
+         * @private createOwnMap
+         * @description create map elements
+         */
+        _createMap: function() {
+            var self = this,
+                mapContainer = this;
+
+            mapContainer = this._createElement('div', this.options.mapContainerClasses);
+
+            this.map = new google.maps.Map( mapContainer, this.options.mapDefaults );
+            this.mapBounds = new google.maps.LatLngBounds();
+
+            // add map nex to widget
+            this.cached.container.after(mapContainer);
+        }
      };
 
     // A really lightweight plugin wrapper around the constructor,
