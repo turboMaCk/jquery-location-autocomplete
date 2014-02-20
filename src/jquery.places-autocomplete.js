@@ -191,9 +191,9 @@
             mapContainer = this._createElement('div', this.options.mapContainerClasses);
 
             this.map = new window.google.maps.Map( mapContainer, this.options.mapDefaults );
-            this.mapBounds = new window.google.maps.LatLngBounds();
+            this.markersPositions = [];
 
-            // add map nex to widget
+            // add map next to widget
             this.cached.container.after(mapContainer);
         },
         /**
@@ -219,17 +219,18 @@
                 }
 
                 // Create item object
-                self._createItemObject(this, place, marker);
+                self._createItemObject(data, this, place, marker);
             });
         },
         /**
          * @private createItemObject
          * @description create whole item object to deal with relationship
-         * @args option [object] item [object] marker [object]
+         * @args data [object] option [object] item [object] marker [object]
          */
-        _createItemObject: function(option, item, marker) {
+        _createItemObject: function(data, option, item, marker) {
             var self = this,
                 itemObject = {
+                    data: data,
                     option: option,
                     item: item,
                     marker: marker
@@ -243,7 +244,7 @@
                 //remove all
                 $(option).remove();
                 $(item).remove();
-                self._removeMarker(marker);
+                self._removeMarker(marker, data.address);
             });
 
             this.itemCollection.push(itemObject);
@@ -293,7 +294,7 @@
         /**
          * @private createMarker
          * @description creating new marker on map and calling recenter method
-         * @args option [object]
+         * @args data [object]
          */
         _createMarker: function(data) {
             var self = this,
@@ -303,8 +304,8 @@
                     map: self.map
                 });
 
-            // extend instance global bounds with new marker
-            this.mapBounds.extend(position);
+            // add marker to markers array
+            this.markersPositions[data.address] = position;
 
             // fit bounds
             this._fitBounds();
@@ -313,24 +314,41 @@
             return marker;
         },
         /**
-         * @private removeMareker
+         * @private removeMarker
          * @description remove single marker from instance map
-         * @args marker [object]
+         * @args marker [google location object] name [string]
          */
-        _removeMarker: function(marker) {
+        _removeMarker: function(marker, address) {
             window.google.maps.event.clearListeners(marker, 'click');
             marker.setMap(null);
+
+            // remove marker postion from markersPositions
+            this.markersPositions[address] = null;
+
+            // reset bounds
+            this._fitBounds();
         },
         /**
          * @private fitBounds
          * @description map viewport to bounds
-         * @args bounds [google location object || empty]
+         * @args positions [array of google bounds object]
          * if bounds not set => use instance global mapBounds object
          */
-        _fitBounds: function(bounds) {
+        _fitBounds: function(positions) {
+            var bounds = new window.google.maps.LatLngBounds();
 
-            // use global if bounds not set
-            if (!bounds) { bounds = this.mapBounds; }
+            // use global if not set
+            if (!positions) {
+                positions = this.markersPositions;
+            }
+            console.log(positions);
+
+            // loop over positions and extend bounds
+            for (var position in positions) {
+                if (positions[position] !== null) {
+                    bounds.extend(positions[position]);
+                }
+            }
 
             // fit bounds
             this.map.fitBounds(bounds);
