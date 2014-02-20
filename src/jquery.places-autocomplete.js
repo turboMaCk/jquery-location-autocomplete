@@ -102,6 +102,7 @@
             // Place initialization logic here
             // You already have access to the DOM element and the options via the instance,
             // e.g., this.element and this.options
+            var self = this;
 
             // Wrap to grid guide container
             this._createWidget();
@@ -111,6 +112,11 @@
 
             // Prepare array for item collection
             this.itemCollection = [];
+
+            // add keydown listener on searchField
+            this.cached.searchField.on('keydown', function(event) {
+                self._keyEvent(event);
+            });
 
             // setup default selectedList and markers
             // depends on html
@@ -161,10 +167,6 @@
             this.cached.searchField = $(searchInput);
             this.cached.dropContainer = $(dropContainer);
             this.cached.dropList = $(dropList);
-
-            // cache childrens selectors
-            this.cached.selectedItems = $(selectedList).children(':not(' + this.options.searchFieldClasses + ')');
-            this.cached.dropItems = $(dropList).children();
         },
         /**
          * @private createElement
@@ -241,13 +243,17 @@
             $(item).on('click', 'a.search-choice-close', function(event) {
                 event.preventDefault();
 
-                //remove all
+                // trigger remove event
+                $(option).trigger('remove');
+            });
+            $(option).on('remove', function(){
+                 //remove all
                 $(option).remove();
                 $(item).remove();
                 self._removeMarker(marker, data.address);
             });
 
-            this.itemCollection.push(itemObject);
+            this.itemCollection[data.address] = itemObject;
 
             return itemObject;
         },
@@ -341,7 +347,6 @@
             if (!positions) {
                 positions = this.markersPositions;
             }
-            console.log(positions);
 
             // loop over positions and extend bounds
             for (var position in positions) {
@@ -352,6 +357,31 @@
 
             // fit bounds
             this.map.fitBounds(bounds);
+        },
+        /**
+         * @private keyEvent
+         * @description handle keyEvents
+         * @args event [object]
+         */
+        _keyEvent: function (event) {
+            var keyCode = event.keyCode;
+
+            if (keyCode === 8) {
+                this._keyRemove();
+            }
+        },
+        /**
+         * @private keyRemove
+         * @description handle backspace item removing
+         */
+        _keyRemove: function() {
+            var fieldVal = this.cached.searchField.val(),
+                lastOption = $(this.element).children('option').last();
+
+            // remove last marker if is not deleting value
+            if (!fieldVal) {
+                lastOption.trigger('remove');
+            }
         }
      };
 
