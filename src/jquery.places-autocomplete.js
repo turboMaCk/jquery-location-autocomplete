@@ -109,6 +109,9 @@
             // Create own Map if it's set
             if(this.options.useOwnMap) { this._createMap(); }
 
+            // Prepare array for item collection
+            this.itemCollection = [];
+
             // setup default selectedList and markers
             // depends on html
             this.setLocations();
@@ -192,9 +195,6 @@
 
             // add map nex to widget
             this.cached.container.after(mapContainer);
-
-            // prepare instance's global array for markers
-            this.markers = [];
         },
         /**
          * setLocations
@@ -204,7 +204,8 @@
             var self = this,
                 options = $(this.element).find('option:selected'),
                 data,
-                place;
+                place,
+                marker;
 
             $.each(options, function() {
                 data = self._getOptionData(this);
@@ -213,8 +214,41 @@
                 place = self._addPlace(data);
 
                 // Create new marker on map if is created
-                if (self.options.useOwnMap) { self._createMarker(data); }
+                if (self.options.useOwnMap) {
+                    marker = self._createMarker(data);
+                }
+
+                // Create item object
+                self._createItemObject(this, place, marker);
             });
+        },
+        /**
+         * @private createItemObject
+         * @description create whole item object to deal with relationship
+         * @args option [object] item [object] marker [object]
+         */
+        _createItemObject: function(option, item, marker) {
+            var self = this,
+                itemObject = {
+                    option: option,
+                    item: item,
+                    marker: marker
+                };
+
+            // add event listeners to item object
+            // remove event
+            $(item).on('click', 'a.search-choice-close', function(event) {
+                event.preventDefault();
+
+                //remove all
+                $(option).remove();
+                $(item).remove();
+                self._removeMarker(marker);
+            });
+
+            this.itemCollection.push(itemObject);
+
+            return itemObject;
         },
         /**
          * @private addPlace
@@ -231,10 +265,14 @@
                 .data('latitude', data.latitude)
                 .text(data.address)
                 .wrapInner('<span>')
+                .prepend('<a class="location-choice-target"/>')
                 .append('<a class="search-choice-close"/>');
 
             // add item to list
-            return this.cached.searchField.before(item);
+            this.cached.searchField.before(item);
+
+            // return item
+            return item;
         },
         /**
          * @private getOptionData
@@ -271,8 +309,17 @@
             // fit bounds
             this._fitBounds();
 
-            // store marker to instance global
-            this.markers.push(marker);
+            // return marker object
+            return marker;
+        },
+        /**
+         * @private removeMareker
+         * @description remove single marker from instance map
+         * @args marker [object]
+         */
+        _removeMarker: function(marker) {
+            window.google.maps.event.clearListeners(marker, 'click');
+            marker.setMap(null);
         },
         /**
          * @private fitBounds

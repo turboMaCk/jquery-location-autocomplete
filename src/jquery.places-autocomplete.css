@@ -1,3 +1,8 @@
 .chosen-map-canvas {
     height: 300px;
 }
+.location-choice-target {
+    margin: 5px;
+    padding: 5px;
+    background: red;
+}
