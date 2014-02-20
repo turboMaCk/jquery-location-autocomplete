@@ -375,7 +375,7 @@
          * @description handle backspace item removing
          */
         _keyRemove: function() {
-            var fieldVal = this.cached.searchField.val(),
+            var fieldVal = this.cached.searchField.children('input').val(),
                 lastOption = $(this.element).children('option').last();
 
             // remove last marker if is not deleting value
