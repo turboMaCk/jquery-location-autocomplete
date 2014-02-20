@@ -203,29 +203,44 @@
         setLocations: function() {
             var self = this,
                 options = $(this.element).find('option:selected'),
-                item,
-                text;
+                data,
+                place;
 
             $.each(options, function() {
-                text = self._getOptionData(this).address;
+                data = self._getOptionData(this);
 
-                // create selected item
-                item = self._createElement('li', self.options.selectedItemClasses);
-                $(item).append('<span>'+text+'</span>')
-                    .append('<a class="search-choice-close"/>');
-
-                // add new item to list
-                self.cached.searchField.before(item);
+                // add place
+                place = self._addPlace(data);
 
                 // Create new marker on map if is created
-                if (self.options.useOwnMap) { self._createMarker(this); }
+                if (self.options.useOwnMap) { self._createMarker(data); }
             });
+        },
+        /**
+         * @private addPlace
+         * @args data [object]
+         * @return added item
+         */
+        _addPlace: function(data) {
+            // create new item
+            var item = this._createElement('li', this.options.selectedItemClasses);
+
+            // add item data and content
+            $(item)
+                .data('longitude', data.longitude)
+                .data('latitude', data.latitude)
+                .text(data.address)
+                .wrapInner('<span>')
+                .append('<a class="search-choice-close"/>');
+
+            // add item to list
+            return this.cached.searchField.before(item);
         },
         /**
          * @private getOptionData
          * @description get data from single option
          * @args option [object]
-         * @retun data [json]
+         * @retun data [object]
          */
         _getOptionData: function(option) {
             var $option = $(option),
@@ -242,9 +257,8 @@
          * @description creating new marker on map and calling recenter method
          * @args option [object]
          */
-        _createMarker: function(option) {
+        _createMarker: function(data) {
             var self = this,
-                data = this._getOptionData(option),
                 position = new window.google.maps.LatLng(data.latitude, data.longitude),
                 marker = new window.google.maps.Marker({
                     position: position,
