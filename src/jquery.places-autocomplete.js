@@ -77,8 +77,14 @@
             mapDefaults: {
                 mapTypeId: window.google.maps.MapTypeId.ROADMAP,
                 center: new window.google.maps.LatLng(-34.397, 150.644),
-                zoom: 8
-            }
+                zoom: 8,
+                disableDefaultUI: true
+            },
+            /**
+             * singleMarkerZoom
+             * @type [string]
+             */
+            singleMarkerZoom: 7,
         };
 
     // The actual plugin constructor
@@ -110,11 +116,14 @@
             // Create own Map if it's set
             if(this.options.useOwnMap) { this._createMap(); }
 
+            // set google autocomplte
+            this._googleAutocomplete();
+
             // Prepare array for item collection
             this.itemCollection = [];
 
             // add keydown listener on searchField
-            this.cached.searchField.on('keydown', function(event) {
+            $(this.cached.searchInput).on('keydown', function(event) {
                 self._keyEvent(event);
             });
 
@@ -128,7 +137,8 @@
          * this also handle element caching
          */
         _createWidget: function() {
-            var element = $(this.element),
+            var element = this.element,
+                $element = $(element),
                 widget;
 
             // Create container
@@ -139,7 +149,7 @@
 
             // Create search input
             var searchInputWrapper = this._createElement('li', this.options.searchFieldClasses),
-                searchInput = $(searchInputWrapper).append('<input type="text"/>');
+                searchInput = $(searchInputWrapper).append('<input value="" type="text"/>');
             $(selectedList).append(searchInputWrapper);
 
             // create drop container
@@ -153,20 +163,23 @@
             $(widget).append(dropContainer);
 
             // Hide original element
-            element.hide();
+            $element.hide();
 
             // Add widget
-            element.after(widget);
+            $element.after(widget);
 
             // Add cache
             this.cached = {};
 
             // Add elements to cashed
+            this.cached.select = $element;
             this.cached.container = $(widget);
             this.cached.selectedList = $(selectedList);
             this.cached.searchField = $(searchInput);
             this.cached.dropContainer = $(dropContainer);
             this.cached.dropList = $(dropList);
+            // cache search input !! not jQuery
+            this.cached.searchInput = widget.getElementsByTagName('input')[0];
         },
         /**
          * @private createElement
@@ -184,7 +197,7 @@
             return el;
         },
         /**
-         * @private createOwnMap
+         * @private createMap
          * @description create map elements
          */
         _createMap: function() {
@@ -193,7 +206,12 @@
             mapContainer = this._createElement('div', this.options.mapContainerClasses);
 
             this.map = new window.google.maps.Map( mapContainer, this.options.mapDefaults );
-            this.markersPositions = [];
+
+            // define markersPositions object
+            this.markersPositions = {};
+
+            // create InfoWindow
+            this.infowindow = new window.google.maps.InfoWindow();
 
             // add map next to widget
             this.cached.container.after(mapContainer);
@@ -226,7 +244,7 @@
         },
         /**
          * @private createItemObject
-         * @description create whole item object to deal with relationship
+         * @description create item object which is dealing with relationship and events
          * @args data [object] option [object] item [object] marker [object]
          */
         _createItemObject: function(data, option, item, marker) {
@@ -298,11 +316,43 @@
             return data;
         },
         /**
+         * @private create new option
+         * @description create new option in select element
+         * @args data [object] openInfoWindo [boolean]
+         */
+        _createOption: function(data, openInfoWindow) {
+            var self = this,
+                select = this.cached.select,
+                option,
+                place,
+                marker;
+
+            // create new option
+            option = this._createElement('option');
+            // set option value
+            $(option).val('testing-value');
+
+            // add place
+            place = this._addPlace(data);
+
+            // create marker if map is set
+            if (this.options.useOwnMap) {
+                marker = this._createMarker(data);
+                // open info window if it's set
+                if (openInfoWindow) {
+                    this._openInfoWindow(marker, data.address, 'hhh');
+                }
+            }
+
+            // Create item object
+            self._createItemObject(data, option, place, marker);
+        },
+        /**
          * @private createMarker
          * @description creating new marker on map and calling recenter method
          * @args data [object]
          */
-        _createMarker: function(data) {
+        _createMarker: function(data, openInfoWindow) {
             var self = this,
                 position = new window.google.maps.LatLng(data.latitude, data.longitude),
                 marker = new window.google.maps.Marker({
@@ -329,7 +379,7 @@
             marker.setMap(null);
 
             // remove marker postion from markersPositions
-            this.markersPositions[address] = null;
+            delete this.markersPositions[address];
 
             // reset bounds
             this._fitBounds();
@@ -343,6 +393,9 @@
         _fitBounds: function(positions) {
             var bounds = new window.google.maps.LatLngBounds();
 
+            // close infoWindow
+            this.infowindow.close();
+
             // use global if not set
             if (!positions) {
                 positions = this.markersPositions;
@@ -355,8 +408,25 @@
                 }
             }
 
+            // Little bit of functional like code to check object size
+            var size = $.map(positions, function(n, i) { return i; }).length;
+
             // fit bounds
-            this.map.fitBounds(bounds);
+            if (bounds) {
+                // if multiple positions are set, use bounds
+                if (size > 1) {
+                    this.map.fitBounds(bounds);
+                } else {
+                    // if single position is set...
+                    // loop over positions object
+                    for (position in positions) {
+                        this.map.setCenter(positions[position]);
+                    }
+
+                    // set map center
+                    this.map.setZoom(this.options.singleMarkerZoom);
+                }
+            }
         },
         /**
          * @private keyEvent
@@ -382,6 +452,82 @@
             if (!fieldVal) {
                 lastOption.trigger('remove');
             }
+        },
+        /**
+         *  @private googleAutocomplete
+         *  @description using google places autocomplte
+         *  @documentation https://developers.google.com/places/documentation/autocomplete
+         */
+        _googleAutocomplete: function() {
+            var self = this,
+                input = this.cached.searchInput,
+                $input = $(input),
+                options = {};
+
+            this.autocomplete = new window.google.maps.places.Autocomplete(input);
+
+            // add autocomplte select listener
+            window.google.maps.event.addListener(this.autocomplete, 'place_changed', function() {
+                // close infowindow
+                self.infowindow.close();
+
+                // clear input
+                $input.one('blur', function() {
+                    $input.val('');
+                });
+
+                var place = self.autocomplete.getPlace();
+
+                // check if place can be displayed
+                if (!place.geometry) {
+                    return false;
+                }
+
+                // build address string
+                var address = '';
+                if (place.address_components) {
+                    address = [
+                        (place.address_components[0] && place.address_components[0].short_name || ''),
+                        (place.address_components[2] && place.address_components[2].short_name || '')
+                    ].join(', ');
+                }
+
+                // create new marker
+                var data = {
+                    address: address,
+                    longitude: place.geometry.location.lng(),
+                    latitude: place.geometry.location.lat()
+                };
+
+                self._createOption(data, true);
+
+                // if place has viewport, use it for rezoome map
+                if (place.geometry.viewport) {
+                    self.map.fitBounds(place.geometry.viewport);
+                } else {
+                    // else use fitBounds method with location arg
+                    self._fitBounds([place.geometry.location]);
+                }
+
+                // hard clear input
+                setTimeout(function() {
+                    $input.val('');
+                }, 10);
+            });
+        },
+        /**
+         * @private openInfoWindow
+         * @description open google info window
+         * @args maker [google marker object] title [string]
+         */
+        _openInfoWindow: function(marker, title) {
+            var infowindow = this.infowindow;
+
+            // set infowindow content
+            infowindow.setContent('<div><strong>' + title + '</strong></div>');
+
+            // open infowindow
+            infowindow.open(this.map, marker);
         }
      };
 
