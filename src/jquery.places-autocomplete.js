@@ -201,9 +201,9 @@
          * @description create map elements
          */
         _createMap: function() {
-            var mapContainer = this;
+            var self = this;
 
-            mapContainer = this._createElement('div', this.options.mapContainerClasses);
+            var mapContainer = this._createElement('div', this.options.mapContainerClasses);
 
             this.map = new window.google.maps.Map( mapContainer, this.options.mapDefaults );
 
@@ -212,6 +212,10 @@
 
             // create InfoWindow
             this.infowindow = new window.google.maps.InfoWindow();
+            // deselect all when infowindow close
+            window.google.maps.event.addListener(this.infowindow, 'closeclick', function() {
+                self._deselectAll();
+            });
 
             // add map next to widget
             this.cached.container.after(mapContainer);
@@ -265,8 +269,16 @@
                 // trigger remove event
                 $(option).trigger('remove');
             });
+            // remove item on marker dblclick
+            window.google.maps.event.addListener(marker, 'dblclick', function() {
+                $(option).trigger('remove');
+            });
+
             $(option).on('remove', function(){
-                 //remove all
+                // deselect all
+                self._deselectAll();
+
+                //remove all
                 $(option).remove();
                 $(item).remove();
                 self._removeMarker(marker, data.address);
@@ -283,6 +295,9 @@
                     // trigger single events
                     $(option).trigger('single');
                 }
+            });
+            window.google.maps.event.addListener(marker, 'click', function() {
+                self._selectSingle(itemObject);
             });
             $(option).on('single', function() {
                 self._selectSingle(itemObject);
@@ -352,6 +367,8 @@
             option = this._createElement('option');
             // set option value
             $(option).val('testing-value');
+            // add option to select
+            $(this.element).append(option);
 
             // add place
             place = this._addPlace(data);
