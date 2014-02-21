@@ -84,7 +84,7 @@
              * singleMarkerZoom
              * @type [string]
              */
-            singleMarkerZoom: 7,
+            singleMarkerZoom: 10,
         };
 
     // The actual plugin constructor
@@ -245,9 +245,9 @@
         /**
          * @private createItemObject
          * @description create item object which is dealing with relationship and events
-         * @args data [object] option [object] item [object] marker [object]
+         * @args data [object] option [object] item [object] marker [object] selectSingle [boolean]
          */
-        _createItemObject: function(data, option, item, marker) {
+        _createItemObject: function(data, option, item, marker, selectSingle) {
             var self = this,
                 itemObject = {
                     data: data,
@@ -257,6 +257,7 @@
                 };
 
             // add event listeners to item object
+
             // remove event
             $(item).on('click', 'a.search-choice-close', function(event) {
                 event.preventDefault();
@@ -270,6 +271,26 @@
                 $(item).remove();
                 self._removeMarker(marker, data.address);
             });
+
+            // single event
+            $(item).on('click', 'a.location-choice-target', function(event) {
+                event.preventDefault();
+
+                // if this is not active, active it else disable active
+                if ($(item).hasClass('active')) {
+                    self._deselectAll();
+                } else {
+                    // trigger single events
+                    $(option).trigger('single');
+                }
+            });
+            $(option).on('single', function() {
+                self._selectSingle(itemObject);
+            });
+            // is is set selectSingle, seleft this after create
+            if (selectSingle) {
+                $(option).trigger('single');
+            }
 
             this.itemCollection[data.address] = itemObject;
 
@@ -345,14 +366,14 @@
             }
 
             // Create item object
-            self._createItemObject(data, option, place, marker);
+            self._createItemObject(data, option, place, marker, true);
         },
         /**
          * @private createMarker
          * @description creating new marker on map and calling recenter method
          * @args data [object]
          */
-        _createMarker: function(data, openInfoWindow) {
+        _createMarker: function(data) {
             var self = this,
                 position = new window.google.maps.LatLng(data.latitude, data.longitude),
                 marker = new window.google.maps.Marker({
@@ -492,7 +513,7 @@
                     ].join(', ');
                 }
 
-                // create new marker
+                // create new option
                 var data = {
                     address: address,
                     longitude: place.geometry.location.lng(),
@@ -501,19 +522,46 @@
 
                 self._createOption(data, true);
 
-                // if place has viewport, use it for rezoome map
-                if (place.geometry.viewport) {
-                    self.map.fitBounds(place.geometry.viewport);
-                } else {
-                    // else use fitBounds method with location arg
-                    self._fitBounds([place.geometry.location]);
-                }
-
                 // hard clear input
                 setTimeout(function() {
                     $input.val('');
                 }, 10);
             });
+        },
+        /**
+         * @private selectSingle
+         * @description select single location, open info window and zoom to marker. If is set viewport, we use it
+         * @args itemObject [object]
+         */
+        _selectSingle: function(itemObject) {
+            var $option = $(itemObject.option),
+                $item = $(itemObject.item),
+                marker = itemObject.marker,
+                data = itemObject.data;
+
+            // set active class to item
+            this.cached.selectedList.children('li').removeClass('active');
+            $item.addClass('active');
+
+            // zoom to marker
+            this._fitBounds([marker.getPosition()]);
+
+            // open info window
+            this._openInfoWindow(marker, data.address);
+        },
+        /**
+         * @private deselectAll
+         * @description deselect all items
+         */
+        _deselectAll: function() {
+            // remove active class from items
+            this.cached.selectedList.children('li').removeClass('active');
+
+            // fit bounds (without parameter it fit all markers)
+            this._fitBounds();
+
+            // close info window
+            this.infowindow.close();
         },
         /**
          * @private openInfoWindow
