@@ -2,10 +2,12 @@
     height: 300px;
 }
 .location-choice-target {
-    margin: 5px;
-    padding: 5px;
-    background: red;
+    display: block;
+    float: left;
+    height: 14px;
+    width: 10px;
+    background: url('img/map-ico.png') 0 0 no-repeat;
 }
 .active .location-choice-target {
-    background: blue;
+    background-position: 0 100%;
 }

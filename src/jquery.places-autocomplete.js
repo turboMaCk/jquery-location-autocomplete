@@ -210,6 +210,9 @@
             // define markersPositions object
             this.markersPositions = {};
 
+            // define global geocoder
+            this.geocoder = new window.google.maps.Geocoder();
+
             // create InfoWindow
             this.infowindow = new window.google.maps.InfoWindow();
             // deselect all when infowindow close
@@ -217,8 +220,53 @@
                 self._deselectAll();
             });
 
+            // listener for adding markers
+            window.google.maps.event.addListener(this.map, 'click', function(event) {
+                var position = event.latLng,
+                    latitude = position.lat(),
+                    longitude = position.lng(),
+                    data = {
+                        latitude: latitude,
+                        longitude: longitude
+                    };
+
+                // search address
+                self._searchPlace(data);
+            });
+
             // add map next to widget
             this.cached.container.after(mapContainer);
+        },
+        /**
+         * searchPlace
+         * @description getting address for position
+         * @documentation https://developers.google.com/maps/documentation/javascript/geocoding
+         * @args location [google lat lang object]
+         */
+        _searchPlace: function(data) {
+            var self = this,
+                latLng = new window.google.maps.LatLng(data.latitude, data.longitude),
+                firstResult,
+                address;
+
+            this.geocoder.geocode({ 'latLng' : latLng }, function(results, status) {
+                if (status === window.google.maps.GeocoderStatus.OK) {
+                    firstResult = results[0];
+                    console.log(firstResult);
+                    if (firstResult) {
+                        address = firstResult.address_components[0].short_name;
+                        if (firstResult.address_components[1]) address += ' ' + firstResult.address_components[1].short_name;
+                        if (firstResult.address_components[4]) address += ', ' + firstResult.address_components[4].short_name;
+                        data.address = address;
+
+                        self._createOption(data);
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            });
         },
         /**
          * setLocations
@@ -358,7 +406,7 @@
          */
         _createOption: function(data, openInfoWindow) {
             var self = this,
-                select = this.cached.select,
+                $select = this.cached.select,
                 option,
                 place,
                 marker;
@@ -368,7 +416,7 @@
             // set option value
             $(option).val('testing-value');
             // add option to select
-            $(this.element).append(option);
+            $select.append(option);
 
             // add place
             place = this._addPlace(data);
@@ -391,6 +439,7 @@
          * @args data [object]
          */
         _createMarker: function(data) {
+            console.log(data);
             var self = this,
                 position = new window.google.maps.LatLng(data.latitude, data.longitude),
                 marker = new window.google.maps.Marker({
@@ -551,8 +600,7 @@
          * @args itemObject [object]
          */
         _selectSingle: function(itemObject) {
-            var $option = $(itemObject.option),
-                $item = $(itemObject.item),
+            var $item = $(itemObject.item),
                 marker = itemObject.marker,
                 data = itemObject.data;
 
