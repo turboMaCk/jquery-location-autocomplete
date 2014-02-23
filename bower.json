@@ -1,11 +1,11 @@
 {
-  "name": "jquery-places-autocomplete",
-  "version": "0.0.0",
+  "name": "places-autocomplete",
+  "version": "0.0.1",
   "dependencies": {
-    "chosen": "~1.1.0"
+    "chosen": "~1.1.0",
+    "jquery": "~2.1.0"
   },
   "devDependencies": {
-    "qunit": "~1.12.0",
-    "jquery": "~2.1.0"
+    "qunit": "~1.12.0"
   }
 }
