@@ -1,9 +1,15 @@
 {
-  "name": "jquery-places-autocomplete",
-  "version": "0.0.0",
+  "name": "places-autocomplete",
+  "version": "0.0.1-beta",
   "description": "jQuery Places autocomplete widget",
   "keywords": [
-    "jquery-plugin"
+    "jquery-plugin",
+    "google",
+    "maps",
+    "google-maps",
+    "autocomplete",
+    "select multiple",
+    "chosen"
   ],
   "homepage": "https://github.com/turboMaCk/jquery-places-autocomplete",
   "author": {
@@ -31,6 +37,7 @@
     "time-grunt": "~0.2.3",
     "load-grunt-tasks": "~0.2.0",
     "jshint-stylish": "~0.1.3",
-    "grunt": "~0.4.2"
+    "grunt": "~0.4.2",
+    "grunt-contrib-copy": "~0.5.0"
   }
 }

@@ -68,6 +68,14 @@ module.exports = function (grunt) {
         src: ['test/**/*.js']
       }
     },
+    copy: {
+        main: {
+            expand : true,
+            cwd: 'src/',
+            src: ['**/*.css', 'img/**/*'],
+            dest: 'dist/'
+        }
+    },
     watch: {
       gruntfile: {
         files: '<%= jshint.gruntfile.src %>',
@@ -96,7 +104,8 @@ module.exports = function (grunt) {
   });
 
   // Default task.
-  grunt.registerTask('default', ['jshint', 'connect', 'qunit', 'clean', 'concat', 'uglify']);
+  grunt.registerTask('default', ['jshint', 'connect', 'qunit', 'clean', 'concat', 'uglify', 'copy']);
   grunt.registerTask('server', ['connect', 'watch']);
   grunt.registerTask('test', ['jshint', 'connect', 'qunit']);
+grunt.registerTask('dist', ['connect', 'clean', 'concat', 'uglify', 'copy']);
 };
