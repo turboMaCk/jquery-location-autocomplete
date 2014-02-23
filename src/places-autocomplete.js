@@ -354,12 +354,9 @@
 
             // address change listener
             $(option).on('addressChange', function (event, val) {
-                var data = {
-                        address: val,
-                        latitude: itemObject.data.latitude,
-                        longitude: itemObject.data.longitude
-                    },
-                    value = self._buildValue(data);
+                itemObject.data.address = val;
+
+                var value = self._buildValue(itemObject.data.address);
 
                 // add value to option
                 $(option).val(value);
@@ -665,7 +662,7 @@
                 data = itemObject.data,
                 option = itemObject.option,
                 marker = itemObject.marker,
-                input = this._createElement('input', '.marker-input');
+                input = this._createElement('input', 'marker-input');
 
             input.type = 'text';
             input.value = data.address;
