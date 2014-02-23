@@ -22,8 +22,8 @@ jQuery widget for multiple places selection using Google maps API with structure
 
 Download the [production version][min] or the [development version][max].
 
-[min]: https://raw.github.com/turboMaCk/jquery-jquery-places-autocomplete/master/dist/jquery.places-autocomplete.min.js
-[max]: https://raw.github.com/turboMaCk/jquery-jquery-places-autocomplete/master/dist/jquery.places-autocomplete.js
+[min]: https://raw.github.com/turboMaCk/jquery-places-autocomplete/master/dist/jquery.places-autocomplete.min.js
+[max]: https://raw.github.com/turboMaCk/jquery-places-autocomplete/master/dist/jquery.places-autocomplete.js
 
 In your web page:
 
