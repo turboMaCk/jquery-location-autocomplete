@@ -363,7 +363,7 @@
                 var data = {
                         address: val,
                         latitude: itemObject.data.latitude,
-                        longitude: itemObject.data.logintude
+                        longitude: itemObject.data.longitude
                     },
                     value = self._buildValue(data);
 
@@ -432,6 +432,7 @@
 
             // create new option
             option = this._createElement('option');
+            $(option).attr('selected', true);
 
             // set option value
             var val = this._buildValue(data);
@@ -461,6 +462,7 @@
          * @args data [object]
          */
         _buildValue: function(data) {
+            console.log(data);
             var address = data.address,
                 latitude = data.latitude,
                 longitude = data.longitude;
