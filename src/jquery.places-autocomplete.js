@@ -64,11 +64,6 @@
              * @type [string]
              */
             mapContainerClasses: 'chosen-map-canvas',
-            /*
-             * useOwnMap
-             * @type [boolean]
-             */
-            useOwnMap: true,
             /**
              * mapDefaults
              * just basic google maps setup
@@ -84,7 +79,7 @@
              * singleMarkerZoom
              * @type [string]
              */
-            singleMarkerZoom: 10,
+            singleMarkerZoom: 17,
         };
 
     // The actual plugin constructor
@@ -113,8 +108,8 @@
             // Wrap to grid guide container
             this._createWidget();
 
-            // Create own Map if it's set
-            if(this.options.useOwnMap) { this._createMap(); }
+            // create map
+            this._createMap();
 
             // set google autocomplte
             this._googleAutocomplete();
@@ -251,14 +246,24 @@
 
             this.geocoder.geocode({ 'latLng' : latLng }, function(results, status) {
                 if (status === window.google.maps.GeocoderStatus.OK) {
+                    // store first result
                     firstResult = results[0];
-                    console.log(firstResult);
+
                     if (firstResult) {
+
+                        // set address
                         address = firstResult.address_components[0].short_name;
-                        if (firstResult.address_components[1]) address += ' ' + firstResult.address_components[1].short_name;
-                        if (firstResult.address_components[4]) address += ', ' + firstResult.address_components[4].short_name;
+                        if (firstResult.address_components[1]) {
+                            address = firstResult.address_components[1].short_name + ' ' + firstResult.address_components[0].short_name;
+                        }
+                        if (firstResult.address_components[4]) {
+                            address += ', ' + firstResult.address_components[4].short_name;
+                        }
+
+                        // set address
                         data.address = address;
 
+                        // create new option
                         self._createOption(data);
                     } else {
                         return false;
@@ -285,10 +290,8 @@
                 // add place
                 place = self._addPlace(data);
 
-                // Create new marker on map if is created
-                if (self.options.useOwnMap) {
-                    marker = self._createMarker(data);
-                }
+                // Create new marker
+                marker = self._createMarker(data);
 
                 // Create item object
                 self._createItemObject(data, this, place, marker);
@@ -355,6 +358,23 @@
                 $(option).trigger('single');
             }
 
+            // address change listener
+            $(option).on('addressChange', function (event, val) {
+                var data = {
+                        address: val,
+                        latitude: itemObject.data.latitude,
+                        longitude: itemObject.data.logintude
+                    },
+                    value = self._buildValue(data);
+
+                // add value to option
+                $(option).val(value);
+                // change otion data address
+                $(option).data('address', val);
+
+                $(item).children('span').text(val);
+            });
+
             this.itemCollection[data.address] = itemObject;
 
             return itemObject;
@@ -402,36 +422,50 @@
         /**
          * @private create new option
          * @description create new option in select element
-         * @args data [object] openInfoWindo [boolean]
+         * @args data [object]
          */
-        _createOption: function(data, openInfoWindow) {
-            var self = this,
-                $select = this.cached.select,
+        _createOption: function(data) {
+            var $select = this.cached.select,
                 option,
                 place,
                 marker;
 
             // create new option
             option = this._createElement('option');
+
             // set option value
-            $(option).val('testing-value');
+            var val = this._buildValue(data);
+            $(option).val(val);
+
+            // set option data
+            $(option)
+                .data('address', data.address)
+                .data('latitude', data.latitude)
+                .data('logitude', data.logitude);
+
             // add option to select
             $select.append(option);
 
             // add place
             place = this._addPlace(data);
 
-            // create marker if map is set
-            if (this.options.useOwnMap) {
-                marker = this._createMarker(data);
-                // open info window if it's set
-                if (openInfoWindow) {
-                    this._openInfoWindow(marker, data.address, 'hhh');
-                }
-            }
+            // create marker
+            marker = this._createMarker(data);
 
             // Create item object
-            self._createItemObject(data, option, place, marker, true);
+            this._createItemObject(data, option, place, marker, true);
+        },
+        /**
+         * @private buildValue
+         * @description serialize location data to option value
+         * @args data [object]
+         */
+        _buildValue: function(data) {
+            var address = data.address,
+                latitude = data.latitude,
+                longitude = data.longitude;
+
+            return address + '|' + latitude + '|' + longitude;
         },
         /**
          * @private createMarker
@@ -439,7 +473,6 @@
          * @args data [object]
          */
         _createMarker: function(data) {
-            console.log(data);
             var self = this,
                 position = new window.google.maps.LatLng(data.latitude, data.longitude),
                 marker = new window.google.maps.Marker({
@@ -548,8 +581,7 @@
         _googleAutocomplete: function() {
             var self = this,
                 input = this.cached.searchInput,
-                $input = $(input),
-                options = {};
+                $input = $(input);
 
             this.autocomplete = new window.google.maps.places.Autocomplete(input);
 
@@ -601,8 +633,7 @@
          */
         _selectSingle: function(itemObject) {
             var $item = $(itemObject.item),
-                marker = itemObject.marker,
-                data = itemObject.data;
+                marker = itemObject.marker;
 
             // set active class to item
             this.cached.selectedList.children('li').removeClass('active');
@@ -612,7 +643,7 @@
             this._fitBounds([marker.getPosition()]);
 
             // open info window
-            this._openInfoWindow(marker, data.address);
+            this._openInfoWindow(itemObject);
         },
         /**
          * @private deselectAll
@@ -631,13 +662,29 @@
         /**
          * @private openInfoWindow
          * @description open google info window
-         * @args maker [google marker object] title [string]
+         * @args itemObject [object]
          */
-        _openInfoWindow: function(marker, title) {
-            var infowindow = this.infowindow;
+        _openInfoWindow: function(itemObject) {
+            var infowindow = this.infowindow,
+                data = itemObject.data,
+                option = itemObject.option,
+                marker = itemObject.marker,
+                input = this._createElement('input', '.marker-input');
+
+            input.type = 'text';
+            input.value = data.address;
 
             // set infowindow content
-            infowindow.setContent('<div><strong>' + title + '</strong></div>');
+            infowindow.setContent(input);
+
+            // set event listener to input
+            $(input).on('keydown', function() {
+                var $this = $(this);
+                window.setTimeout(function() {
+                    var newVal = $this.val();
+                    $(option).trigger('addressChange', newVal);
+                }, 10);
+            });
 
             // open infowindow
             infowindow.open(this.map, marker);
