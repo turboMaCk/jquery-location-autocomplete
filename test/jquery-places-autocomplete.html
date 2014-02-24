@@ -4,12 +4,14 @@
   <meta charset="utf-8">
   <title>jQuery Places autocomplete widget Test Suite</title>
   <!-- Load local jQuery. -->
-  <script src="../bower_components/jquery/jquery.js"></script>
+  <script src="../bower_components/jquery/dist/jquery.min.js"></script>
+  <!-- load google maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>
   <!-- Load local QUnit. -->
   <link rel="stylesheet" href="../bower_components/qunit/qunit/qunit.css" media="screen">
   <script src="../bower_components/qunit/qunit/qunit.js"></script>
   <!-- Load local lib and tests. -->
-  <script src="../src/jquery-places-autocomplete.js"></script>
+  <script src="../src/places-autocomplete.js"></script>
   <script src="jquery-places-autocomplete_test.js"></script>
   <!-- Removing access to jQuery and $. But it'll still be available as _$, if
        you REALLY want to mess around with jQuery in the console. REMEMBER WE

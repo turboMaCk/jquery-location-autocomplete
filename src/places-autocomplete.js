@@ -492,6 +492,7 @@
             marker.setMap(null);
 
             // remove marker postion from markersPositions
+            this.markersPositions[address].map = null;
             delete this.markersPositions[address];
 
             // reset bounds
