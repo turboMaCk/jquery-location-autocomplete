@@ -311,6 +311,8 @@
             $(item).on('click', 'a.search-choice-close', function(event) {
                 event.preventDefault();
 
+                console.log(marker);
+
                 // trigger remove event
                 $(option).trigger('remove');
             });
@@ -458,7 +460,7 @@
                 latitude = data.latitude,
                 longitude = data.longitude;
 
-            return address + '|' + latitude + '|' + longitude;
+            return address + ':' + latitude + ':' + longitude;
         },
         /**
          * @private createMarker
@@ -488,12 +490,15 @@
          * @args marker [google location object] name [string]
          */
         _removeMarker: function(marker, address) {
-            window.google.maps.event.clearListeners(marker, 'click');
-            marker.setMap(null);
-
             // remove marker postion from markersPositions
-            this.markersPositions[address].map = null;
             delete this.markersPositions[address];
+
+            // remove markers
+            // set timeout is hack:(
+            window.setTimeout( function() {
+                window.google.maps.event.clearListeners(marker, 'click');
+                marker.setMap(null);
+            }, 50);
 
             // reset bounds
             this._fitBounds();
